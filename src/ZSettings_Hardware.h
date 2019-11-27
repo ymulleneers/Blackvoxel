@@ -92,8 +92,10 @@ class ZSettings_Hardware
 
     // Options for special gaming modes
 
-    bool Experimental_LearningMode;
+    //bool Experimental_LearningMode;
     ZString Setting_Favorite_Editor;
+    bool   RemoteExtension_Enable;
+    UShort RemoteExtension_Port;
 
     // Setting Version.
 

@@ -50,6 +50,15 @@
 #  include "ZOs_Specific_ViewDoc.h"
 #endif
 
+#ifndef Z_ZGAMEWINDOW_RESUMEREQUEST_LITTLE_H
+#  include "ZGameWindow_ResumeRequest_Little.h"
+#endif
+
+#ifndef Z_ZGAMEWINDOW_ZPROGROBOT_REMOTE_H
+#  include "ZGameWindow_ZProgRobot_Remote.h"
+#endif
+
+
 Bool ZGame_Events::KeyDown( UShort KeySym )
 {
   ZActor * Actor;
@@ -133,7 +142,8 @@ Bool ZGame_Events::KeyDown( UShort KeySym )
     case SDLK_j:
     case SDLK_k:
                   {
-                    if (!GameEnv->Settings_Hardware->Experimental_LearningMode) break;
+                    // if (!GameEnv->Settings_Hardware->Experimental_LearningMode) break;
+                    if (GameEnv->GameInfo.GameType!=1) break;
                     ULong SlotNum = 20;
                     ZInventory * Inv = Actor->Inventory;
                     if (KeySym==SDLK_j) Actor->LearningModePage ++;
@@ -146,6 +156,7 @@ Bool ZGame_Events::KeyDown( UShort KeySym )
                               // Robots and co...
                       case 1: Inv->SetSlot(SlotNum++, 108, 8192);
                               Inv->SetSlot(SlotNum++, 236, 8192);
+                              Inv->SetSlot(SlotNum++, 256, 1);
                               Inv->SetSlot(SlotNum++, 49 , 8192);
                               Inv->SetSlot(SlotNum++, 214, 8192);
                               Inv->SetSlot(SlotNum++, 216, 8192);
@@ -155,19 +166,16 @@ Bool ZGame_Events::KeyDown( UShort KeySym )
                               Inv->SetSlot(SlotNum++, 105, 8192);
                               Inv->SetSlot(SlotNum++, 106, 8192);
 
-                              Inv->SetSlot(SlotNum++,  94, 8192);
-                              Inv->SetSlot(SlotNum++, 95, 8192);
-                              Inv->SetSlot(SlotNum++, 88, 8192);
-                              Inv->SetSlot(SlotNum++, 87, 8192);
-                              Inv->SetSlot(SlotNum++, 92, 8192);
                               Inv->SetSlot(SlotNum++,198, 8192);
                               Inv->SetSlot(SlotNum++,204, 8192);
                               Inv->SetSlot(SlotNum++,209, 8192);
                               Inv->SetSlot(SlotNum++,96, 8192);
                               Inv->SetSlot(SlotNum++,239, 8192);
 //                            Inv->SetSlot(SlotNum++,0, 0);
+                              while(SlotNum<40) Inv->SetSlot(SlotNum++, 0, 0);
                               break;
                       case 2:
+
                               Inv->SetSlot(SlotNum++, 90, 8192);
                               Inv->SetSlot(SlotNum++,99 , 8192);
                               Inv->SetSlot(SlotNum++,100, 8192);
@@ -182,6 +190,11 @@ Bool ZGame_Events::KeyDown( UShort KeySym )
                               Inv->SetSlot(SlotNum++,199, 8192);
                               Inv->SetSlot(SlotNum++,240, 8192);
                               Inv->SetSlot(SlotNum++,241, 8192);
+                              Inv->SetSlot(SlotNum++,  94, 8192);
+                              Inv->SetSlot(SlotNum++, 95, 8192);
+                              Inv->SetSlot(SlotNum++, 88, 8192);
+                              Inv->SetSlot(SlotNum++, 87, 8192);
+                              Inv->SetSlot(SlotNum++, 92, 8192);
 
                               while(SlotNum<40) Inv->SetSlot(SlotNum++, 0, 0);
                               break;
@@ -233,6 +246,18 @@ Bool ZGame_Events::KeyDown( UShort KeySym )
                   }
 
                   break;
+
+    case SDLK_F4: if (!Keyboard_Matrix[SDLK_LSHIFT])
+                  {
+                    SDL_WM_GrabInput(SDL_GRAB_OFF); SDL_ShowCursor(SDL_ENABLE);
+
+                    GameEnv->GameWindow_ResumeRequest_Little->SetGameEnv(GameEnv);
+                    GameEnv->GameWindow_ResumeRequest_Little->SetMessage((char *)"CLICK TO REGAIN CONTROL");
+                    GameEnv->GameWindow_ResumeRequest_Little->Show();
+                  }
+
+                  break;
+
 
     // THE "FEAR KEY" : Always the best way to destroy your world...
     case SDLK_F10:
@@ -346,23 +371,36 @@ void ZGame_Events::Process_StillEvents()
   if (Actor)
   {
 
-    if ( Keyboard_Matrix[SDLK_LSHIFT] || Keyboard_Matrix[SDLK_CAPSLOCK] ){ Actor->Flag_ActivateAntiFall = true; }
+    if ( Keyboard_Matrix[SDLK_LSHIFT] || Keyboard_Matrix[SDLK_CAPSLOCK]
+         || Keyboard_Matrix[SDLK_RCTRL])                                 { Actor->Flag_ActivateAntiFall = true; }
     else                                                                 { Actor->Flag_ActivateAntiFall = false; }
     if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_MoveLeft] )      { Actor->Action_GoLeftStraff(); }
     if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_MoveRight] )     { Actor->Action_GoRightStraff(); }
     if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_MoveForward] )   { Actor->Action_GoForward(); }
     if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_MoveBackward] )  { Actor->Action_GoBackward(); }
-    if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_MoveUp]   && (COMPILEOPTION_DEBUGFACILITY || GameEnv->Settings_Hardware->Experimental_LearningMode))      { Actor->Action_GoUp(); }
-    if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_MoveDown] && (COMPILEOPTION_DEBUGFACILITY || GameEnv->Settings_Hardware->Experimental_LearningMode))      { Actor->Action_GoDown(); }
+    // if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_MoveUp]   && (COMPILEOPTION_DEBUGFACILITY || GameEnv->Settings_Hardware->Experimental_LearningMode))
+    if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_MoveUp]   && (COMPILEOPTION_DEBUGFACILITY || GameEnv->GameInfo.GameType == 1))
+    {
+      if(Keyboard_Matrix[SDLK_LCTRL]) Actor->Action_SetActorMode(3);
+      else Actor->Action_GoUp();
+    }
+    //if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_MoveDown] && (COMPILEOPTION_DEBUGFACILITY || GameEnv->Settings_Hardware->Experimental_LearningMode))
+    if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_MoveDown] && (COMPILEOPTION_DEBUGFACILITY || GameEnv->GameInfo.GameType == 1))
+    {
+      if(Keyboard_Matrix[SDLK_LCTRL]) Actor->Action_SetActorMode(0);
+      else Actor->Action_GoDown();
+    }
     if ( Keyboard_Matrix[Settings_Hardware->Setting_Key_Jump])           { Actor->Action_Jump();}
     if ( Keyboard_Matrix[SDLK_e])                                        { Actor->Action_GetInOutOfVehicle();}
     //if ( Keyboard_Matrix[SDLK_a] )                                     { Actor->Action_GoUp(GameEnv->Time_GameLoop  * 1.5); }
     if ( Keyboard_Matrix[SDLK_h] && COMPILEOPTION_DEBUGFACILITY )        { Actor->Action_GoFastForward(500.0); }
     if ( Keyboard_Matrix[SDLK_DELETE] && !COMPILEOPTION_DEBUGFACILITY ) { Actor->LifePoints = 0.0; }
-    if ( Keyboard_Matrix[SDLK_KP0] && (COMPILEOPTION_DEBUGFACILITY || GameEnv->Settings_Hardware->Experimental_LearningMode))       { Actor->Action_SetActorMode(0);}
+    // if ( Keyboard_Matrix[SDLK_KP0] && (COMPILEOPTION_DEBUGFACILITY || GameEnv->Settings_Hardware->Experimental_LearningMode))       { Actor->Action_SetActorMode(0);}
+    if ( Keyboard_Matrix[SDLK_KP0] && (COMPILEOPTION_DEBUGFACILITY || GameEnv->GameInfo.GameType == 1))       { Actor->Action_SetActorMode(0);}
     /* if ( Keyboard_Matrix[SDLK_KP1] && COMPILEOPTION_DEBUGFACILITY)       { Actor->Action_SetActorMode(1);} */
     if ( Keyboard_Matrix[SDLK_KP2] && COMPILEOPTION_DEBUGFACILITY)       { Actor->Action_SetActorMode(2);}
-    if ( Keyboard_Matrix[SDLK_KP3] && (COMPILEOPTION_DEBUGFACILITY || GameEnv->Settings_Hardware->Experimental_LearningMode))       { Actor->Action_SetActorMode(3);}
+    //if ( Keyboard_Matrix[SDLK_KP3] && (COMPILEOPTION_DEBUGFACILITY || GameEnv->Settings_Hardware->Experimental_LearningMode))       { Actor->Action_SetActorMode(3);}
+    if ( Keyboard_Matrix[SDLK_KP3] && (COMPILEOPTION_DEBUGFACILITY || GameEnv->GameInfo.GameType == 1))       { Actor->Action_SetActorMode(3);}
     if ( Keyboard_Matrix[SDLK_KP4] && COMPILEOPTION_DEBUGFACILITY)       { Actor->Action_SetActorMode(4);}
     if ( Keyboard_Matrix[SDLK_KP5] && COMPILEOPTION_DEBUGFACILITY)
     {
@@ -751,7 +789,7 @@ void ZGame_Events::Process_StillEvents()
 
     // if ( Keyboard_Matrix[SDLK_F3] && COMPILEOPTION_DEBUGFACILITY )   { SDL_WM_GrabInput(SDL_GRAB_OFF); SDL_ShowCursor(SDL_DISABLE); }
     if ( Keyboard_Matrix[SDLK_F5] )   { GameEnv->World->Save(); }
-    if ( Keyboard_Matrix[SDLK_F4] && COMPILEOPTION_DEBUGFACILITY )
+    if ( Keyboard_Matrix[SDLK_F4] && Keyboard_Matrix[SDLK_LSHIFT] && COMPILEOPTION_DEBUGFACILITY )
     {
       ZString Infos;
       Long x,y,z;
@@ -912,6 +950,7 @@ void ZGame_Events::Process_StillEvents()
       else if (GameEnv->GameWindow_UserTextureTransformer->Is_Shown()) {GameEnv->GameWindow_UserTextureTransformer->Hide();}
       else if (GameEnv->GameWindow_Sequencer->Is_Shown())         { GameEnv->GameWindow_Sequencer->Hide();}
       else if (GameEnv->GameWindow_AsmDebug->Is_Shown())          { GameEnv->GameWindow_AsmDebug->Hide(); if (GameEnv->GameWindow_AsmHardware->Is_Shown()) GameEnv->GameWindow_AsmHardware->Hide(); }
+      else if (GameEnv->GameWindow_ProgRobot_Remote->Is_Shown())         { GameEnv->GameWindow_ProgRobot_Remote->Hide();}
       else
       {
         GameEnv->GameWindow_Inventory->SetGameEnv(GameEnv);
@@ -920,9 +959,9 @@ void ZGame_Events::Process_StillEvents()
       }
     }
 
-    if (Keyboard_Matrix[SDLK_F12])
+    if (Keyboard_Matrix[SDLK_F7])
     {
-      Keyboard_Matrix[SDLK_F12] = 0;
+      Keyboard_Matrix[SDLK_F7] = 0;
 
       if (GameEnv->GameWindow_DisplayInfos->Is_Shown()) { GameEnv->GameWindow_DisplayInfos->Hide(); }
       else                                              { GameEnv->GameWindow_DisplayInfos->Show(); }

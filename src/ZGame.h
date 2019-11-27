@@ -188,8 +188,14 @@
 #  include "ZOs_Specific_HardwareDependent.h"
 #endif
 
+#ifndef Z_ZGAMEINFO_H
+#  include "ZGameInfo.h"
+#endif
+
 
 class ZRender_Basic;
+class ZGameWindow_ProgRobot_Remote;
+class ZGameWindow_ResumeRequest_Little;
 
 class ZGame
 {
@@ -223,6 +229,7 @@ class ZGame
              Initialized_WorldInfo =
              Initialized_GameEventSequencer =
              Initialized_HardwareInfo =
+             Initialized_GameStats =
              false;
              TileSetStyles = 0 ; Font_1 =  0; GuiTileset = 0;
              Settings_Hardware = 0;
@@ -242,11 +249,13 @@ class ZGame
              GameWindow_Inventory = 0;
              GameWindow_DisplayInfos = 0;
              GameWindow_ProgRobot_Asm = 0;
+             GameWindow_ProgRobot_Remote = 0;
              GameWindow_AsmDebug = 0;
              GameWindow_AsmHardware = 0;
              GameWindow_AsmExtendedRegisters = 0;
              GameWindow_Compilation_Result = 0;
              GameWindow_ResumeRequest = 0;
+             GameWindow_ResumeRequest_Little = 0;
              GameWindow_SPS = 0;
              GameWindow_Scan = 0;
              GameProgressBar = 0;
@@ -258,20 +267,21 @@ class ZGame
              GameWindow_UserTextureTransformer = 0;
              GameWindow_Sequencer = 0;
              GameStat = 0;
-             Initialized_GameStats = false;
              WorldInfo = 0;
              ShipCenter = 0;
-             Enable_MVI = true;
-             Enable_LoadNewSector = true;
-             Enable_NewSectorRendering = true;
+
              GameEventSequencer = 0;
              Time_FrameTime = 20;
              Time_GameElapsedTime = 0;
              VFov = 63.597825649;
-             Machine_Serial = 1;
-             Stop_Programmable_Robots = false;
-             Previous_GameVersion = 0;
+
              HardwareInfo = 0;
+
+
+             // Game Info : Contains all data that must be reset between games.
+
+             InitGameSession();
+
    }
   ~ZGame() { UniverseNum = 0; }
 
@@ -343,6 +353,7 @@ class ZGame
   ZGameWindow_Programmable           * GameWindow_Programmable;
   ZGameWindow_UserTextureTransformer * GameWindow_UserTextureTransformer;
   ZGameWindow_ProgRobot_Asm          * GameWindow_ProgRobot_Asm;
+  ZGameWindow_ProgRobot_Remote          * GameWindow_ProgRobot_Remote;
   ZGameWindow_ProgressBar            * GameProgressBar;
   ZGameWindow_Advertising            * GameWindow_Advertising;
   ZGameWindow_DisplayInfos           * GameWindow_DisplayInfos;
@@ -352,9 +363,11 @@ class ZGame
   ZGameWindow_AsmExtendedRegisters   * GameWindow_AsmExtendedRegisters;
   ZGameWindow_Compilation_Result     * GameWindow_Compilation_Result;
   ZGameWindow_ResumeRequest          * GameWindow_ResumeRequest;
+  ZGameWindow_ResumeRequest_Little   * GameWindow_ResumeRequest_Little;
   ZGameWindow_SPS                    * GameWindow_SPS;
   ZGameWindow_Scan                   * GameWindow_Scan;
   ZGameWindow_RTFM                   * GameWindow_RTFM;
+
 
   bool Initialized_UserDataStorage;
   bool Initialized_Settings;
@@ -383,6 +396,9 @@ class ZGame
   bool Initialized_WorldInfo;
   bool Initialized_GameEventSequencer;
 
+  // Services
+
+  bool Service_RemoteRobotServerStarted;
 
   // Screen Informations
 
@@ -398,10 +414,9 @@ class ZGame
   UELong Time_FrameTime; // Same as Time_GameLoop but in integer format;
   UELong Time_GameElapsedTime;
 
-  // Values
+  // Game Options
 
-  ULong Machine_Serial;       // Serial number for robots and/or machines that needs it.
-  ULong Previous_GameVersion; // Game version of the loaded world file.
+  ZGameInfo GameInfo;
 
 // General Inits
 
@@ -450,7 +465,7 @@ class ZGame
   bool Start_RendererSettings();
   bool Start_GameWindows();
   bool Start_ToolManager();
-  bool Start_PersistGameEnv();
+
 
   bool End_WorldInfo();
   bool End_Game_Events();
@@ -463,7 +478,8 @@ class ZGame
   bool End_ToolManager();
   bool End_Game_Stats();
   bool End_GameEventSequencer();
-  bool End_PersistGameEnv();
+
+
 
   bool Init()
   {
@@ -491,9 +507,9 @@ class ZGame
   {
     bool result;
 
-    result = Start_PersistGameEnv();     if(!result) return(false);
+    //result = Start_PersistGameEnv();     if(!result) return(false);
     result = Start_GameEventSequencer(); if(!result) return(false);
-//    result = Start_WorldInfo();          if(!result) return(false);
+    //result = Start_WorldInfo();          if(!result) return(false);
     result = Start_Game_Stats();         if(!result) return(false);
     result = Start_Game_Events();        if(!result) return(false);
     result = Start_World();              if(!result) return(false);
@@ -520,7 +536,7 @@ class ZGame
     if (Initialized_GameStats)         End_Game_Stats();
 //    if (Initialized_WorldInfo)         End_WorldInfo();
     if (GameEventSequencer)            End_GameEventSequencer();
-                                       End_PersistGameEnv();
+//                                     End_PersistGameEnv();
     Sound->Stop_AllSounds();
 
     return(true);
@@ -562,7 +578,12 @@ class ZGame
         FONTSIZE_VAR2 = 6,
         FONTSIZE_VAR3 = 7,
         FONTSIZE_VAR4 = 8,
-        FONTSIZE_VAR5 = 9
+        FONTSIZE_VAR5 = 9,
+        FONTSIZE_VAR6 = 10,
+        FONTSIZE_VAR7 = 11,
+        FONTSIZE_VAR8 = 12,
+        FONTSIZE_VAR9 = 13,
+        FONTSIZE_VAR10= 14
   };
 
 
@@ -609,6 +630,11 @@ class ZGame
   }
 
   bool OutputHelperFiles();
+
+
+  bool LoadGameInfo();
+  bool SaveGameInfo();
+  void InitGameSession(); // Init ZGame data that must be reset beween games.
 
 };
 
